@@ -1,0 +1,22 @@
+# Local config with secrets — copy config/*.example.php to these names
+/config/app.php
+/config/database.php
+
+# Build output
+/deploy/
+/netlify-preview/
+/netlify-preview.zip
+
+# Runtime data
+/storage/logs/*.log
+/uploads/**/*.jpg
+/uploads/**/*.jpeg
+/uploads/**/*.png
+/uploads/**/*.webp
+
+# Local helpers / editor
+/_*.php
+/.claude/
+/.vscode/
+.DS_Store
+Thumbs.db

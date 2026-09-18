@@ -1,0 +1,64 @@
+# MACH Home Services — Apache rules
+Options -Indexes -MultiViews
+DirectoryIndex index.php
+DirectorySlash Off
+
+# Reject request bodies over 10 MB (uploads are capped at 2 MB in the app)
+LimitRequestBody 10485760
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Private folders are never web-accessible
+  RewriteRule ^(config|includes|database|storage|docs|cron|tools|deploy)(/|$) - [F,L]
+
+  # Generated files
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+  RewriteRule ^robots\.txt$ robots.php [L]
+
+  # SEO-friendly routes
+  RewriteRule ^services/([a-z0-9-]+)/?$ service.php?slug=$1 [L,QSA]
+  RewriteRule ^(privacy-policy|terms|refund-policy)/?$ page.php?slug=$1 [L,QSA]
+
+  # Folders with an index.php without trailing slash: /admin/leads -> admin/leads/index.php
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteCond %{REQUEST_FILENAME}/index.php -f
+  RewriteRule ^(.+?)/?$ $1/index.php [L,QSA]
+
+  # Extensionless URLs: /about -> about.php, /admin/login -> admin/login.php
+  # (only when that exact .php file exists — prevents rewrite loops on odd URLs like /services/AC-REPAIR)
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}.php -f
+  RewriteRule ^([^.]+?)/?$ $1.php [L]
+
+  # Everything else that doesn't exist -> 404 page
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ 404.php [L]
+</IfModule>
+
+# Block hidden files, SQL dumps, logs, backups
+<FilesMatch "(?i)(^\.|\.(sql|log|md|bak|ini|env|lock|zip)$)">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 month"
+  ExpiresByType application/javascript "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/jpeg "access plus 1 month"
+  ExpiresByType image/webp "access plus 1 month"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json application/xml text/plain image/svg+xml
+</IfModule>
+
+# Security headers for static files too (PHP pages set these themselves)
+<IfModule mod_headers.c>
+  Header setifempty X-Content-Type-Options "nosniff"
+  Header setifempty X-Frame-Options "SAMEORIGIN"
+  Header setifempty Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
